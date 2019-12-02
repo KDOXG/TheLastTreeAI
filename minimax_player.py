@@ -24,7 +24,10 @@ class mmTree:
         #    return Minimax(self.mmNext[i])
 
 def minimaxMake(board):
-    game = Game(board)
+    game = Game()
+    game.init_board_def(2,board[:8],board[8:23],board[24],board[25])
+    return game.get_available_moves()
+    
 
 class Animal:
 	land = 2
@@ -331,10 +334,15 @@ while not done:
         #   
         resp = urllib.request.urlopen("%s/tab" % host)
         board = eval(resp.read())
-        auxBoard = []
-        for i in range(int(board[0]))
+        animal = []
+        land = []
+        for i in range(4):
+            animal.append((board[i*2],board[i*2+1]))
+        auxBoard = board[8:]
+        for i in range(5):
+            land.append((auxBoard[i*3],auxBoard[i*3+1],auxBoard[i*3+2]))
 
-        head = mmTree(-1,-1,-1,,goal)
+        head = mmTree(-1,-1,-1,animal,land,goal)
         mmTemp2 = []
         mmTemp2.append(head)
         aux = []
@@ -346,15 +354,20 @@ while not done:
             for j in range(mmActual):
                 mmTemp = mmTemp2.pop(0)
                 for k in range(mmActual):
-                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k2]))
+                    board = []
+                    board.append(mmTemp.game.animals)
+                    board.append(mmTemp.game.land)
+                    board.append(goal)
+                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k2],board[:8],board[8:23],board[23:]))
                     #KDOXG: Falta implementar get_available_moves()
-                    aux.append(get_available_moves(player,goal,movimentos[0]))
-                    del movimentos[0]
+                    aux.append(minimaxMake(board))
+                    aux.append(get_available_moves(player,goal,movimentos.pop(0)))
                 mmTemp2.append(mmTemp.mmNext)
             movimentos = aux
             actual = []
             aux = []
 
+        
         movimento = Minimax()   #KDOXG: Falta implementar Minimax()
 
         #movimento = get_available_moves(player,goal)

@@ -389,8 +389,6 @@ def tab():
 		return jsonify((game.animals,game.lands))
 	else:
 		aux = []
-		aux.append(str(len(game.animals)))
-		aux.append(str(len(game.land)))
 		for i in range(len(game.animals)):
 			aux.append(game.animals[i].fruits)
 			aux.append(game.animals[i].land)
