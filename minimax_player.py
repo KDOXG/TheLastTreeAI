@@ -15,8 +15,20 @@ class mmTree:
         self.land = land
         mmNext = []
 
-    def Minimax(self):
-        branching = self.mmNext
+	def valorMinimax(self,altura,mm):
+		if altura == 0:
+			self.mmValue = HEURISTICA
+			return
+		for i in range(altura):
+			valorMinimax(self.mmNext[i],altura-1,1 if mm == 0 else 0)
+			if (HEURISTICA_VALIDA == true):
+				self.mmValue = HEURISTICA
+		return
+
+    def fatorMinimax(self):
+		for i in range(len(self.mmNext)):
+			self.mmNext[i].valorMinimax(5,0)
+
         #if random.randint(1,2) % 2 == 0 or len(self.mmNext) == 0:
         #    return (self.rule,self.animal,self.land)
         #else:
@@ -368,7 +380,7 @@ while not done:
             aux = []
 
         
-        movimento = Minimax()   #KDOXG: Falta implementar Minimax()
+        movimento = head.fatorMinimax()   #KDOXG: Falta implementar Minimax()
 
         #movimento = get_available_moves(player,goal)
 
