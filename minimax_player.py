@@ -23,9 +23,10 @@ class mmTree:
         #    i = random.randint(0,len(self.mmNext)-1)
         #    return Minimax(self.mmNext[i])
 
-def minimaxMake(board):
+def minimaxMake(board,player,movimento):
     game = Game()
-    game.init_board_def(2,board[:8],board[8:23],board[24],board[25])
+    game.init_board_def(2,board[:4],board[4:9],board[9],board[10])
+	game.make_move(player,movimento[0],movimento[1],movimento[2])
     return game.get_available_moves()
     
 
@@ -358,10 +359,9 @@ while not done:
                     board.append(mmTemp.game.animals)
                     board.append(mmTemp.game.land)
                     board.append(goal)
-                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k2],board[:8],board[8:23],board[23:]))
-                    #KDOXG: Falta implementar get_available_moves()
-                    aux.append(minimaxMake(board))
-                    aux.append(get_available_moves(player,goal,movimentos.pop(0)))
+                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k2],board[:4],board[4:9],board[9:]))
+                    aux.append(minimaxMake(board,player,movimentos.pop(0)))
+                    #aux.append(get_available_moves(player,goal,movimentos.pop(0)))
                 mmTemp2.append(mmTemp.mmNext)
             movimentos = aux
             actual = []
