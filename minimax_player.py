@@ -5,43 +5,6 @@ import random
 import time
 import copy
 
-class mmTree:
-    def __init__(self,rule,animal,land,Animal,Land,goal):
-        mmValue = 0
-        gameCopy = Game()
-        gameCopy.init_board_def(2,Animal,Land,goal[0],goal[1])
-        self.rule = rule
-        self.animal = animal
-        self.land = land
-        mmNext = []
-
-	def valorMinimax(self,altura,mm):
-		if altura == 0:
-			self.mmValue = HEURISTICA
-			return
-		for i in range(altura):
-			valorMinimax(self.mmNext[i],altura-1,1 if mm == 0 else 0)
-			if (HEURISTICA_VALIDA == true):
-				self.mmValue = HEURISTICA
-		return
-
-    def fatorMinimax(self):
-		for i in range(len(self.mmNext)):
-			self.mmNext[i].valorMinimax(5,0)
-
-        #if random.randint(1,2) % 2 == 0 or len(self.mmNext) == 0:
-        #    return (self.rule,self.animal,self.land)
-        #else:
-        #    i = random.randint(0,len(self.mmNext)-1)
-        #    return Minimax(self.mmNext[i])
-
-def minimaxMake(board,player,movimento):
-    game = Game()
-    game.init_board_def(2,board[:4],board[4:9],board[9],board[10])
-	game.make_move(player,movimento[0],movimento[1],movimento[2])
-    return game.get_available_moves()
-    
-
 class Animal:
 	land = 2
 	fruits = 0
@@ -284,32 +247,102 @@ class Game:
 					moves.append((self.goals[player],animal,land))
 		return moves
 
-    # Returns a list of all possible boards from the current
-	def get_available_boards(self,player):
-		boards = []
-		for animal in range(len(self.animals)):
-			for land in range(len(self.lands)):
-				for rule in range(6):
-					newboard = self.preview_move(player,rule,animal,land)
-					if newboard != None:
-						boards.append(newboard)
-				winboard = self.preview_move(player,self.goals[player],animal,land)
-				if winboard!=None:
-					boards.append(winboard)
-		return boards
-
-###### SERVER ######
+    def take_turn(self):
 
 
+    def take_turn(self):
+		self.player = (self.player+1)%self.NUMPLAYERS
+		return self.player
 
-@app.route("/movimentos")
-def movimentos():
-	player = int(request.args.get('player'))
-	if request.args.get('format') == "json":
-		return jsonify(game.get_available_moves(player))
-	else:
-		return str(game.get_available_moves(player))
+    def setposition(self, animal, land):
+		self.animals[animal].land = land
+	
+	def addfruit(self, animal, num):
+		self.animals[animal].fruits += num
+	
+	def addseed(self, land, num):
+		self.lands[land].seeds += num
+	
+	def addplant(self, land, num):
+		self.lands[land].plants += num
+	
+	def addtree(self, land, num):
+		self.lands[land].trees += num
+	
+	def make_move(self, player, rule, animal, land):
+		if self.ended:
+			return (-1, "Game is over")
 
+		if player != self.player:
+			return (-2, "Not your turn")
+
+		if self.preview_move(player,rule,animal,land) == None:
+			return (-3, "Invalid move")
+
+		if rule == 0: #move (displace an animal to an adjacent land)
+			self.previous_land = land
+			self.setposition(animal,land)
+		elif rule == 1: #gather (create a fruit picking it from a tree)
+			self.addfruit(animal,1)
+		elif rule == 2: #eat (destroy a fruit and spit out its seed)
+			self.addfruit(animal,-1)
+			self.addseed(self.animals[animal].land,1)
+		elif rule == 3: #plant (create a plant by planting a seed)
+			self.addseed(self.animals[animal].land,-1)
+			self.addplant(self.animals[animal].land,1)
+		elif rule == 4: #fertilize (create a tree by fertilizing a plant with a fruit)
+			self.addfruit(animal,-1)
+			self.addplant(self.animals[animal].land,-1)
+			self.addtree(self.animals[animal].land,1)
+		elif rule == 5: #devour (destroy 2 fruits)
+			self.addfruit(animal,-2)
+		elif rule >= 10 and rule <= self.NUMGOALS+9: #self.goals
+			self.ended = True
+			self.player = -1
+			return (0, "%d wins" % player)
+
+		self.last_rule = rule
+		self.last_animal = animal
+		self.last_land = land
+
+		self.movements += 1
+		self.take_turn()
+
+		return (1, "Successful Move")
+
+class mmTree:
+    def __init__(self,rule,animal,land,Animal,Land,goal):
+        self.mmValue = 0
+        self.gameCopy = Game()
+        self.gameCopy.init_board_def(2,Animal,Land,goal[0],goal[1])
+        self.rule = rule
+        self.animal = animal
+        self.land = land
+        self.mmNext = []
+    def valorMinimax(self,altura,mm):
+        if altura == 0:
+            self.mmValue = self.rule + self.animal + self.land
+            return
+        for i in range(altura):
+            valorMinimax(self.mmNext[i],altura-1,1 if mm == 0 else 0)
+            if self.mmValue > self.mmNext[i].mmValue:
+                self.mmValue = self.mmNext[i].mmValue
+        return
+    def fatorMinimax(self):
+        for i in range(len(self.mmNext)):
+            self.mmNext[i].valorMinimax(5,0)
+        value = self.mmValue
+        for i in range(len(self.mmNext)):
+            if self.mmNext[i].mmValue >= value:
+                result = (self.mmNext[i].rule,self.mmNext[i].animal,self.mmNext[i].land)
+                value = self.mmNext[i].mmValue
+        return result
+    
+def minimaxMake(board,player,movimento):
+    game = Game()
+    game.init_board_def(2,board[0],board[1],board[2][0],board[2][1])
+    game.make_move(player,movimento[0],movimento[1],movimento[2])
+    return game.get_available_moves()
 
 
     # Alterar se utilizar outro host
@@ -368,10 +401,14 @@ while not done:
                 mmTemp = mmTemp2.pop(0)
                 for k in range(mmActual):
                     board = []
-                    board.append(mmTemp.game.animals)
-                    board.append(mmTemp.game.land)
+                    #print(len(mmTemp.gameCopy.animals))
+                    board.append(mmTemp.gameCopy.animals)
+                    #print(len(mmTemp.gameCopy.lands))
+                    board.append(mmTemp.gameCopy.lands)
+                    #print(len(goal))
                     board.append(goal)
-                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k2],board[:4],board[4:9],board[9:]))
+                    #print(board)
+                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k][2],board[0],board[1],board[2]))
                     aux.append(minimaxMake(board,player,movimentos.pop(0)))
                     #aux.append(get_available_moves(player,goal,movimentos.pop(0)))
                 mmTemp2.append(mmTemp.mmNext)
@@ -380,9 +417,7 @@ while not done:
             aux = []
 
         
-        movimento = head.fatorMinimax()   #KDOXG: Falta implementar Minimax()
-
-        #movimento = get_available_moves(player,goal)
+        movimento = head.fatorMinimax()   
 
         # Escolhe um movimento aleatoriamente
         #movimento = random.choice(movimentos)
