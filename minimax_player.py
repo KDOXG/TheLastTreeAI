@@ -6,13 +6,14 @@ import time
 import copy
 
 class Animal:
-	land = 2
-	fruits = 0
+    def __init__(self,land,fruits):
+        self.land = land
+        self.fruits = fruits
 
 class Land:
-	def __init__(self,trees):
-		self.seeds = 0
-		self.plants = 0
+	def __init__(self,seeds,plants,trees):
+		self.seeds = seeds
+		self.plants = plants
 		self.trees = trees
 
 class Game:
@@ -55,8 +56,8 @@ class Game:
 	def init_board(self,numplayers):
 		self.NUMGOALS = 8
 		self.NUMPLAYERS = numplayers
-		self.animals = [Animal(),Animal(),Animal(),Animal()]
-		self.lands = [Land(0),Land(0),Land(1),Land(0),Land(0)]
+		self.animals = [Animal(2,0),Animal(2,0),Animal(2,0),Animal(2,0)]
+		self.lands = [Land(0,0,0),Land(0,0,0),Land(0,0,1),Land(0,0,0),Land(0,0,0)]
 		availableGoals = []
 		for g in range(self.NUMGOALS):
 			availableGoals.append(10+g)
@@ -84,60 +85,42 @@ class Game:
 			return self.lands[num].trees
 		else:
 			return -1
-	
-	def preview_board(self, modifications):
-		newAnimals = copy.deepcopy(self.animals)
-		newLands = copy.deepcopy(self.lands)
-		for modification in (modifications):
-			if modification[0]=='land':
-				newAnimals[modification[1]].land = modification[2]
-			elif modification[0]=='fruit':
-				newAnimals[modification[1]].fruits = modification[2]
-			elif modification[0]=='seed':
-				newLands[modification[1]].seeds = modification[2]
-			elif modification[0]=='plant':
-				newLands[modification[1]].plants = modification[2]
-			elif modification[0]=='tree':
-				newLands[modification[1]].trees = modification[2]
-			else:
-				return None
-		return (newAnimals,newLands)
-	
+
 	def preview_move(self, player, rule, animal, land):
 		if rule == 0: #move (displace an animal to an adjacent land)
 			if self.animals[animal].land+1 == land or self.animals[animal].land-1 == land:
 				if self.last_rule==0 and self.last_animal==animal and self.last_land==self.animals[animal].land and self.previous_land==land:
 					return None #(-5, "Can't reverse last action")
 				else:
-					return self.preview_board([('land',animal,land)])
+					return preview_board(self,[('land',animal,land)])
 			else:
 				return None #(-3.0, "Invalid move, input land is not adjacent to the land of input animal")
 		elif rule == 1: #gather (create a fruit picking it from a tree)
 			if self.lands[self.animals[animal].land].trees > 0:
-				return self.preview_board([('fruit',animal,self.animals[animal].fruits+1)])
+				return preview_board(self,[('fruit',animal,self.animals[animal].fruits+1)])
 			else:			
 				return None #(-3.1, "Invalid move, not enough trees")
 		elif rule == 2: #eat (destroy a fruit and spit out its seed)
 			if self.animals[animal].fruits > 0:
-				return self.preview_board([('fruit',animal,self.animals[animal].fruits-1),('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds+1)])
+				return preview_board(self,[('fruit',animal,self.animals[animal].fruits-1),('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds+1)])
 			else:
 				return None # (-3.2, "Invalid move,  not enough fruits")
 		elif rule == 3: #plant (create a plant by planting a seed)
 			if self.lands[self.animals[animal].land].seeds > 0:
-				return self.preview_board([('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants+1)])
+				return preview_board(self,[('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants+1)])
 			else:
 				return None # (-3.3, "Invalid move,  not enough seeds")
 		elif rule == 4: #fertilize (create a tree by fertilizing a plant with a fruit)
 			if self.lands[self.animals[animal].land].plants > 0:
 				if self.animals[animal].fruits > 0:
-					return self.preview_board([('fruit',animal,self.animals[animal].fruits-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants-1),('tree',self.animals[animal].land,self.lands[self.animals[animal].land].trees+1)])
+					return preview_board(self,[('fruit',animal,self.animals[animal].fruits-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants-1),('tree',self.animals[animal].land,self.lands[self.animals[animal].land].trees+1)])
 				else:
 					return None # (-3.2, "Invalid move,  not enough fruits")
 			else:
 				return None # (-3.4, "Invalid move,  not enough plants")
 		elif rule == 5: #devour (destroy 2 fruits)
 			if self.animals[animal].fruits > 1:
-				return self.preview_board([('fruit',animal,self.animals[animal].fruits-2)])
+				return preview_board(self,[('fruit',animal,self.animals[animal].fruits-2)])
 			else:
 				return None # (-3.2, "Invalid move, not enough fruits")
 		elif rule == 10: #the fruit king (an animal with 5+ fruits is the only one with fruits)
@@ -246,69 +229,86 @@ class Game:
 				if self.preview_move(player,self.goals[player],animal,land)!=None:
 					moves.append((self.goals[player],animal,land))
 		return moves
+	
+def preview_board(self, modifications):
+	newAnimals = copy.deepcopy(self.animals)
+	newLands = copy.deepcopy(self.lands)
+	for modification in (modifications):
+		if modification[0]=='land':
+			newAnimals[modification[1]].land = modification[2]
+		elif modification[0]=='fruit':
+			newAnimals[modification[1]].fruits = modification[2]
+		elif modification[0]=='seed':
+			newLands[modification[1]].seeds = modification[2]
+		elif modification[0]=='plant':
+			newLands[modification[1]].plants = modification[2]
+		elif modification[0]=='tree':
+			newLands[modification[1]].trees = modification[2]
+		else:
+			return None
+	return (newAnimals,newLands)
+	
 
-    def take_turn(self):
-
-
-    def take_turn(self):
+def take_turn(self):
 		self.player = (self.player+1)%self.NUMPLAYERS
 		return self.player
 
-    def setposition(self, animal, land):
-		self.animals[animal].land = land
+def setposition(self, animal, land):
+	self.animals[animal].land = land
 	
-	def addfruit(self, animal, num):
-		self.animals[animal].fruits += num
+def addfruit(self, animal, num):
+	self.animals[animal].fruits += num
 	
-	def addseed(self, land, num):
-		self.lands[land].seeds += num
+def addseed(self, land, num):
+	self.lands[land].seeds += num
 	
-	def addplant(self, land, num):
-		self.lands[land].plants += num
+def addplant(self, land, num):
+	self.lands[land].plants += num
 	
-	def addtree(self, land, num):
-		self.lands[land].trees += num
+def addtree(self, land, num):
+	self.lands[land].trees += num
 	
-	def make_move(self, player, rule, animal, land):
-		if self.ended:
-			return (-1, "Game is over")
+def make_move(self, player, rule, animal, land):
+	if self.ended:
+		return (-1, "Game is over")
 
-		if player != self.player:
-			return (-2, "Not your turn")
+	if player != self.player:
+		return (-2, "Not your turn")
 
-		if self.preview_move(player,rule,animal,land) == None:
-			return (-3, "Invalid move")
+	if self.preview_move(player,rule,animal,land) == None:
+		return (-3, "Invalid move")
 
-		if rule == 0: #move (displace an animal to an adjacent land)
-			self.previous_land = land
-			self.setposition(animal,land)
-		elif rule == 1: #gather (create a fruit picking it from a tree)
-			self.addfruit(animal,1)
-		elif rule == 2: #eat (destroy a fruit and spit out its seed)
-			self.addfruit(animal,-1)
-			self.addseed(self.animals[animal].land,1)
-		elif rule == 3: #plant (create a plant by planting a seed)
-			self.addseed(self.animals[animal].land,-1)
-			self.addplant(self.animals[animal].land,1)
-		elif rule == 4: #fertilize (create a tree by fertilizing a plant with a fruit)
-			self.addfruit(animal,-1)
-			self.addplant(self.animals[animal].land,-1)
-			self.addtree(self.animals[animal].land,1)
-		elif rule == 5: #devour (destroy 2 fruits)
-			self.addfruit(animal,-2)
-		elif rule >= 10 and rule <= self.NUMGOALS+9: #self.goals
-			self.ended = True
-			self.player = -1
-			return (0, "%d wins" % player)
+	if rule == 0: #move (displace an animal to an adjacent land)
+		self.previous_land = land
+		self.setposition(animal,land)
+	elif rule == 1: #gather (create a fruit picking it from a tree)
+		self.addfruit(animal,1)
+	elif rule == 2: #eat (destroy a fruit and spit out its seed)
+		self.addfruit(animal,-1)
+		self.addseed(self.animals[animal].land,1)
+	elif rule == 3: #plant (create a plant by planting a seed)
+		self.addseed(self.animals[animal].land,-1)
+		self.addplant(self.animals[animal].land,1)
+	elif rule == 4: #fertilize (create a tree by fertilizing a plant with a fruit)
+		self.addfruit(animal,-1)
+		self.addplant(self.animals[animal].land,-1)
+		self.addtree(self.animals[animal].land,1)
+	elif rule == 5: #devour (destroy 2 fruits)
+		self.addfruit(animal,-2)
+	elif rule >= 10 and rule <= self.NUMGOALS+9: #self.goals
+		self.ended = True
+		self.player = -1
+		return (0, "%d wins" % player)
 
-		self.last_rule = rule
-		self.last_animal = animal
-		self.last_land = land
+	self.last_rule = rule
+	self.last_animal = animal
+	self.last_land = land
 
-		self.movements += 1
-		self.take_turn()
+	self.movements += 1
+	self.take_turn()
 
-		return (1, "Successful Move")
+	return (1, "Successful Move")
+
 
 class mmTree:
     def __init__(self,rule,animal,land,Animal,Land,goal):
@@ -341,8 +341,8 @@ class mmTree:
 def minimaxMake(board,player,movimento):
     game = Game()
     game.init_board_def(2,board[0],board[1],board[2][0],board[2][1])
-    game.make_move(player,movimento[0],movimento[1],movimento[2])
-    return game.get_available_moves()
+    make_move(game,player,movimento[0],movimento[1],movimento[2])
+    return game.get_available_moves(player)
 
 
     # Alterar se utilizar outro host
@@ -383,10 +383,10 @@ while not done:
         animal = []
         land = []
         for i in range(4):
-            animal.append((board[i*2],board[i*2+1]))
+            animal.append(Animal(board[i*2],board[i*2+1]))
         auxBoard = board[8:]
         for i in range(5):
-            land.append((auxBoard[i*3],auxBoard[i*3+1],auxBoard[i*3+2]))
+            land.append(Land(auxBoard[i*3],auxBoard[i*3+1],auxBoard[i*3+2]))
 
         head = mmTree(-1,-1,-1,animal,land,goal)
         mmTemp2 = []
