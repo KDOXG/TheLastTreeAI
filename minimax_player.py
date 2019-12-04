@@ -333,21 +333,16 @@ class mmTree:
                     self.mmValue = self.mmNext[i].mmValue
         return
 
-    def fatorMinimax(self,player):
+    def fatorMinimax(self):
         for i in range(len(self.mmNext)):
-            self.mmNext[i].valorMinimax(5,1 if player == 0 else 0)
+            self.mmNext[i].valorMinimax(5,0)
         value = self.mmValue
         r = random.randint(0,len(self.mmNext)-1)
         result = (self.mmNext[r].rule,self.mmNext[r].animal,self.mmNext[r].land)
         for i in range(len(self.mmNext)):
-            if player == 1:
-                if self.mmNext[i].mmValue > value:
-                    result = (self.mmNext[i].rule,self.mmNext[i].animal,self.mmNext[i].land)
-                    value = self.mmNext[i].mmValue
-            else:
-                if self.mmNext[i].mmValue < value:
-                    result = (self.mmNext[i].rule,self.mmNext[i].animal,self.mmNext[i].land)
-                    value = self.mmNext[i].mmValue
+            if self.mmNext[i].mmValue > value:
+                result = (self.mmNext[i].rule,self.mmNext[i].animal,self.mmNext[i].land)
+                value = self.mmNext[i].mmValue
         return result
     
 def minimaxMake(Animal,Land,goal,player,movimento):
@@ -356,11 +351,14 @@ def minimaxMake(Animal,Land,goal,player,movimento):
     game.make_move(player,movimento[0],movimento[1],movimento[2])
     return game.get_available_moves(player)
 
+if len(sys.argv)==1:
+    print("Voce deve especificar o numero do jogador (0 ou 1)\n\nExemplo:    ./random_client.py 0")
+    quit()
 
     # Alterar se utilizar outro host
 host = "http://localhost:8080"
 
-player = 1
+player = int(sys.argv[1])
 
 goal = []
 resp = urllib.request.urlopen("%s/goals?player=0" % host)
