@@ -320,7 +320,7 @@ class mmTree:
         self.mmNext = []
 
     def valorMinimax(self,altura,mm):
-        if altura == 0:
+        if altura == 0:     #HEURISTICA AQUI
             self.mmValue = self.rule + self.animal + self.land
             return
         for i in range(len(self.mmNext)):
@@ -337,7 +337,8 @@ class mmTree:
         for i in range(len(self.mmNext)):
             self.mmNext[i].valorMinimax(5,1 if player == 0 else 0)
         value = self.mmValue
-        result = (self.mmNext[0].rule,self.mmNext[0].animal,self.mmNext[0].land)
+        r = random.randint(0,len(self.mmNext)-1)
+        result = (self.mmNext[r].rule,self.mmNext[r].animal,self.mmNext[r].land)
         for i in range(len(self.mmNext)):
             if player == 1:
                 if self.mmNext[i].mmValue > value:
