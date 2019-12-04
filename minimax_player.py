@@ -423,7 +423,7 @@ while not done:
             actual = []
             aux = []
         
-        movimento = head.fatorMinimax(player)   
+        movimento = head.fatorMinimax()   
         
         # Escolhe um movimento aleatoriamente
         #movimento = random.choice(movimentos)
