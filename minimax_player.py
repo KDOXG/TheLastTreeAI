@@ -86,41 +86,59 @@ class Game:
 		else:
 			return -1
 
+	def preview_board(self, modifications):
+		newAnimals = copy.deepcopy(self.animals)
+		newLands = copy.deepcopy(self.lands)
+		for modification in (modifications):
+			if modification[0]=='land':
+				newAnimals[modification[1]].land = modification[2]
+			elif modification[0]=='fruit':
+				newAnimals[modification[1]].fruits = modification[2]
+			elif modification[0]=='seed':
+				newLands[modification[1]].seeds = modification[2]
+			elif modification[0]=='plant':
+				newLands[modification[1]].plants = modification[2]
+			elif modification[0]=='tree':
+				newLands[modification[1]].trees = modification[2]
+			else:
+				return None
+		return (newAnimals,newLands)
+
 	def preview_move(self, player, rule, animal, land):
 		if rule == 0: #move (displace an animal to an adjacent land)
 			if self.animals[animal].land+1 == land or self.animals[animal].land-1 == land:
 				if self.last_rule==0 and self.last_animal==animal and self.last_land==self.animals[animal].land and self.previous_land==land:
 					return None #(-5, "Can't reverse last action")
 				else:
-					return preview_board(self,[('land',animal,land)])
+					return self.preview_board([('land',animal,land)])
 			else:
 				return None #(-3.0, "Invalid move, input land is not adjacent to the land of input animal")
 		elif rule == 1: #gather (create a fruit picking it from a tree)
 			if self.lands[self.animals[animal].land].trees > 0:
-				return preview_board(self,[('fruit',animal,self.animals[animal].fruits+1)])
+				return self.preview_board([('fruit',animal,self.animals[animal].fruits+1)])
 			else:			
 				return None #(-3.1, "Invalid move, not enough trees")
 		elif rule == 2: #eat (destroy a fruit and spit out its seed)
 			if self.animals[animal].fruits > 0:
-				return preview_board(self,[('fruit',animal,self.animals[animal].fruits-1),('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds+1)])
+				return self.preview_board([('fruit',animal,self.animals[animal].fruits-1),('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds+1)])
 			else:
 				return None # (-3.2, "Invalid move,  not enough fruits")
 		elif rule == 3: #plant (create a plant by planting a seed)
 			if self.lands[self.animals[animal].land].seeds > 0:
-				return preview_board(self,[('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants+1)])
+				return self.preview_board([('seed',self.animals[animal].land,self.lands[self.animals[animal].land].seeds-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants+1)])
 			else:
 				return None # (-3.3, "Invalid move,  not enough seeds")
 		elif rule == 4: #fertilize (create a tree by fertilizing a plant with a fruit)
 			if self.lands[self.animals[animal].land].plants > 0:
 				if self.animals[animal].fruits > 0:
-					return preview_board(self,[('fruit',animal,self.animals[animal].fruits-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants-1),('tree',self.animals[animal].land,self.lands[self.animals[animal].land].trees+1)])
+					return self.preview_board([('fruit',animal,self.animals[animal].fruits-1),('plant',self.animals[animal].land,self.lands[self.animals[animal].land].plants-1),('tree',self.animals[animal].land,self.lands[self.animals[animal].land].trees+1)])
 				else:
 					return None # (-3.2, "Invalid move,  not enough fruits")
 			else:
 				return None # (-3.4, "Invalid move,  not enough plants")
 		elif rule == 5: #devour (destroy 2 fruits)
 			if self.animals[animal].fruits > 1:
-				return preview_board(self,[('fruit',animal,self.animals[animal].fruits-2)])
+				return self.preview_board([('fruit',animal,self.animals[animal].fruits-2)])
 			else:
 				return None # (-3.2, "Invalid move, not enough fruits")
 		elif rule == 10: #the fruit king (an animal with 5+ fruits is the only one with fruits)
@@ -229,85 +247,66 @@ class Game:
 				if self.preview_move(player,self.goals[player],animal,land)!=None:
 					moves.append((self.goals[player],animal,land))
 		return moves
-	
-def preview_board(self, modifications):
-	newAnimals = copy.deepcopy(self.animals)
-	newLands = copy.deepcopy(self.lands)
-	for modification in (modifications):
-		if modification[0]=='land':
-			newAnimals[modification[1]].land = modification[2]
-		elif modification[0]=='fruit':
-			newAnimals[modification[1]].fruits = modification[2]
-		elif modification[0]=='seed':
-			newLands[modification[1]].seeds = modification[2]
-		elif modification[0]=='plant':
-			newLands[modification[1]].plants = modification[2]
-		elif modification[0]=='tree':
-			newLands[modification[1]].trees = modification[2]
-		else:
-			return None
-	return (newAnimals,newLands)
-	
 
-def take_turn(self):
+	def take_turn(self):
 		self.player = (self.player+1)%self.NUMPLAYERS
 		return self.player
 
-def setposition(self, animal, land):
-	self.animals[animal].land = land
-	
-def addfruit(self, animal, num):
-	self.animals[animal].fruits += num
-	
-def addseed(self, land, num):
-	self.lands[land].seeds += num
-	
-def addplant(self, land, num):
-	self.lands[land].plants += num
-	
-def addtree(self, land, num):
-	self.lands[land].trees += num
-	
-def make_move(self, player, rule, animal, land):
-	if self.ended:
-		return (-1, "Game is over")
+	def setposition(self, animal, land):
+		self.animals[animal].land = land
 
-	if player != self.player:
-		return (-2, "Not your turn")
+	def addfruit(self, animal, num):
+		self.animals[animal].fruits += num
 
-	if self.preview_move(player,rule,animal,land) == None:
-		return (-3, "Invalid move")
+	def addseed(self, land, num):
+		self.lands[land].seeds += num
 
-	if rule == 0: #move (displace an animal to an adjacent land)
-		self.previous_land = land
-		self.setposition(animal,land)
-	elif rule == 1: #gather (create a fruit picking it from a tree)
-		self.addfruit(animal,1)
-	elif rule == 2: #eat (destroy a fruit and spit out its seed)
-		self.addfruit(animal,-1)
-		self.addseed(self.animals[animal].land,1)
-	elif rule == 3: #plant (create a plant by planting a seed)
-		self.addseed(self.animals[animal].land,-1)
-		self.addplant(self.animals[animal].land,1)
-	elif rule == 4: #fertilize (create a tree by fertilizing a plant with a fruit)
-		self.addfruit(animal,-1)
-		self.addplant(self.animals[animal].land,-1)
-		self.addtree(self.animals[animal].land,1)
-	elif rule == 5: #devour (destroy 2 fruits)
-		self.addfruit(animal,-2)
-	elif rule >= 10 and rule <= self.NUMGOALS+9: #self.goals
-		self.ended = True
-		self.player = -1
-		return (0, "%d wins" % player)
+	def addplant(self, land, num):
+		self.lands[land].plants += num
 
-	self.last_rule = rule
-	self.last_animal = animal
-	self.last_land = land
+	def addtree(self, land, num):
+		self.lands[land].trees += num
 
-	self.movements += 1
-	self.take_turn()
+	def make_move(self, player, rule, animal, land):
+		if self.ended:
+			return (-1, "Game is over")
 
-	return (1, "Successful Move")
+		if player != self.player:
+			return (-2, "Not your turn")
+
+		if self.preview_move(player,rule,animal,land) == None:
+			return (-3, "Invalid move")
+
+		if rule == 0: #move (displace an animal to an adjacent land)
+			self.previous_land = land
+			self.setposition(animal,land)
+		elif rule == 1: #gather (create a fruit picking it from a tree)
+			self.addfruit(animal,1)
+		elif rule == 2: #eat (destroy a fruit and spit out its seed)
+			self.addfruit(animal,-1)
+			self.addseed(self.animals[animal].land,1)
+		elif rule == 3: #plant (create a plant by planting a seed)
+			self.addseed(self.animals[animal].land,-1)
+			self.addplant(self.animals[animal].land,1)
+		elif rule == 4: #fertilize (create a tree by fertilizing a plant with a fruit)
+			self.addfruit(animal,-1)
+			self.addplant(self.animals[animal].land,-1)
+			self.addtree(self.animals[animal].land,1)
+		elif rule == 5: #devour (destroy 2 fruits)
+			self.addfruit(animal,-2)
+		elif rule >= 10 and rule <= self.NUMGOALS+9: #self.goals
+			self.ended = True
+			self.player = -1
+			return (0, "%d wins" % player)
+
+		self.last_rule = rule
+		self.last_animal = animal
+		self.last_land = land
+
+		self.movements += 1
+		self.take_turn()
+
+		return (1, "Successful Move")
 
 
 class mmTree:
@@ -319,29 +318,41 @@ class mmTree:
         self.animal = animal
         self.land = land
         self.mmNext = []
+
     def valorMinimax(self,altura,mm):
         if altura == 0:
             self.mmValue = self.rule + self.animal + self.land
             return
-        for i in range(altura):
-            valorMinimax(self.mmNext[i],altura-1,1 if mm == 0 else 0)
-            if self.mmValue > self.mmNext[i].mmValue:
-                self.mmValue = self.mmNext[i].mmValue
+        for i in range(len(self.mmNext)):
+            self.mmNext[i].valorMinimax(altura-1,1 if mm == 0 else 0)
+            if mm == 0:
+                if self.mmValue > self.mmNext[i].mmValue:
+                    self.mmValue = self.mmNext[i].mmValue
+            else:
+                if self.mmValue < self.mmNext[i].mmValue:
+                    self.mmValue = self.mmNext[i].mmValue
         return
-    def fatorMinimax(self):
+
+    def fatorMinimax(self,player):
         for i in range(len(self.mmNext)):
-            self.mmNext[i].valorMinimax(5,0)
+            self.mmNext[i].valorMinimax(5,1 if player == 0 else 0)
         value = self.mmValue
+        result = (self.mmNext[0].rule,self.mmNext[0].animal,self.mmNext[0].land)
         for i in range(len(self.mmNext)):
-            if self.mmNext[i].mmValue >= value:
-                result = (self.mmNext[i].rule,self.mmNext[i].animal,self.mmNext[i].land)
-                value = self.mmNext[i].mmValue
+            if player == 1:
+                if self.mmNext[i].mmValue > value:
+                    result = (self.mmNext[i].rule,self.mmNext[i].animal,self.mmNext[i].land)
+                    value = self.mmNext[i].mmValue
+            else:
+                if self.mmNext[i].mmValue < value:
+                    result = (self.mmNext[i].rule,self.mmNext[i].animal,self.mmNext[i].land)
+                    value = self.mmNext[i].mmValue
         return result
     
-def minimaxMake(board,player,movimento):
+def minimaxMake(Animal,Land,goal,player,movimento):
     game = Game()
-    game.init_board_def(2,board[0],board[1],board[2][0],board[2][1])
-    make_move(game,player,movimento[0],movimento[1],movimento[2])
+    game.init_board_def(2,Animal,Land,goal[0],goal[1])
+    game.make_move(player,movimento[0],movimento[1],movimento[2])
     return game.get_available_moves(player)
 
 
@@ -393,32 +404,28 @@ while not done:
         mmTemp2.append(head)
         aux = []
         #k = 0
-
         for i in range(6):
             actual = movimentos
             mmActual = len(mmTemp2)
             for j in range(mmActual):
                 mmTemp = mmTemp2.pop(0)
                 for k in range(mmActual):
-                    board = []
-                    #print(len(mmTemp.gameCopy.animals))
-                    board.append(mmTemp.gameCopy.animals)
-                    #print(len(mmTemp.gameCopy.lands))
-                    board.append(mmTemp.gameCopy.lands)
-                    #print(len(goal))
-                    board.append(goal)
-                    #print(board)
-                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k][2],board[0],board[1],board[2]))
-                    aux.append(minimaxMake(board,player,movimentos.pop(0)))
+                    animal = []
+                    land = []
+                    for i in range(4):
+                        animal.append(mmTemp.gameCopy.animals[i])
+                    for i in range(5):
+                        land.append(mmTemp.gameCopy.lands[i])
+                    mmTemp.mmNext.append(mmTree(actual[k][0],actual[k][1],actual[k][2],animal,land,goal))
+                    aux.extend(minimaxMake(animal,land,goal,player,movimentos.pop(0)))
                     #aux.append(get_available_moves(player,goal,movimentos.pop(0)))
-                mmTemp2.append(mmTemp.mmNext)
+                mmTemp2.extend(mmTemp.mmNext)
             movimentos = aux
             actual = []
             aux = []
-
         
-        movimento = head.fatorMinimax()   
-
+        movimento = head.fatorMinimax(player)   
+        
         # Escolhe um movimento aleatoriamente
         #movimento = random.choice(movimentos)
 
